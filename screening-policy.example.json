@@ -1,0 +1,10 @@
+{
+  "weights": {"platform": 0.10, "freshness": 0.20, "method": 0.30, "relevance": 0.20, "provenance": 0.15, "popularity": 0.05},
+  "platform_priors": {"youtube": 1.0, "bilibili": 0.85, "xiaohongshu": 0.55, "douyin": 0.45},
+  "accept_at": 65,
+  "reject_below": 40,
+  "min_text_chars": 300,
+  "min_method_families": 2,
+  "max_age_days": {"principle": null, "implementation": 180, "model": 30, "trend": 90},
+  "duplicate_similarity": 0.82
+}

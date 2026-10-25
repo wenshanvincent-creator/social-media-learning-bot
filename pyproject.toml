@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "social-media-learning-bot"
+version = "0.1.0"
+readme = "README.md"
+license = {file = "LICENSE"}
+description = "Topic learning tools and source-linked, progressively retrieved Markdown knowledge"
+requires-python = ">=3.11"
+dependencies = ["yt-dlp>=2026.6.9", "PyYAML>=6", "playwright>=1.50", "imageio-ffmpeg>=0.6"]
+
+[project.optional-dependencies]
+asr = ["faster-whisper>=1.1"]
+dev = ["pytest>=8"]
+measure = ["tiktoken>=0.14"]
+
+[project.scripts]
+sociallearn = "sociallearn.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+sociallearn = ["scripts/*.ps1"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+

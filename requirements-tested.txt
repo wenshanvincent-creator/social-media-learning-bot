@@ -1,0 +1,9 @@
+# Direct dependency versions observed in the Windows prototype on 2026-10-24.
+# Not a full transitive lockfile or a claim these versions stay latest.
+yt-dlp==2026.10.21
+playwright==1.64.1
+PyYAML==6.0.3
+imageio-ffmpeg==0.6.0
+faster-whisper==1.2.1
+tiktoken==0.14.0
+

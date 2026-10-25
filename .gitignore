@@ -1,0 +1,41 @@
+# Runtime evidence and credentials are private local data.
+workspace/
+private/
+state/
+.env
+.env.*
+!.env.example
+*.cookies
+*cookies*.txt
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.pem
+*.key
+*.p12
+# Python/build/tool output
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+node_modules/
+.hyperframes/
+%SystemDrive%/
+*.part
+*.log
+# Platform/browser/media artifacts
+profiles/
+downloads/
+*.mp4
+*.mp3
+*.wav
+*.ipa
+.DS_Store
+Thumbs.db
