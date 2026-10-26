@@ -17,3 +17,5 @@ Keep your runtime `--root` in an ignored or external directory. A custom directo
 Each platform session needs explicit permission for the current run. Permission records stay in the local workspace. The agent/collector must stop on authentication challenges or platform restrictions rather than trying another adapter to evade them.
 
 The optional Whisper path can download and run its model locally. Windows OCR uses installed system components. No cloud LLM caller or telemetry service is implemented in the collector. Network requests to platforms and external collectors remain part of the requested acquisition workflow.
+
+Successful conversion automatically removes the bound managed media copy after output persistence. Failed conversion and deferred OCR retain input for recovery. External originals, upstream exports, transcript/OCR outputs, saved frames and evidence hashes remain. Cleanup updates shared source path bindings rather than leaving references to a removed working file.

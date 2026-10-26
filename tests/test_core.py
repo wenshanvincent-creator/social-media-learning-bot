@@ -106,7 +106,8 @@ def test_restriction_retains_error_code_without_logging_sensitive_exception(work
 def test_caption_metadata_does_not_require_video_formats_but_audio_download_stays_strict(workspace, monkeypatch, caption_mode):
     ws, run = workspace
     calls = []
-    audio = ws.root / "owned-audio.fixture"
+    audio = ws.root / "private/raw/youtube-AAAAAAAAAAA/audio.fixture"
+    audio.parent.mkdir(parents=True, exist_ok=True)
     audio.write_bytes(b"stubbed ASR input; not actual audio")
     class YDL:
         def __init__(self, params): self.params = params
@@ -135,6 +136,8 @@ def test_caption_metadata_does_not_require_video_formats_but_audio_download_stay
     if caption_mode == "automatic":
         assert result["language"] == "en-orig"
     assert calls == ([False, True] if caption_mode == "none" else [False])
+    if caption_mode == "none":
+        assert not audio.exists() and result["media_cleanup"]["audio"]["status"] == "deleted_after_conversion"
 
 
 def test_platform_pause_survives_new_run(workspace):

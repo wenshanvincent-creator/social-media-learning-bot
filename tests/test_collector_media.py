@@ -98,11 +98,15 @@ def test_video_channel_preserves_post_text_and_can_use_shared_asr_and_frames(arc
     result = collector_media.import_redcrack_media(ws, run, root / "export")
     child_id = result["video_source_id"]
     assert child_id != source_id and ws.source(child_id)["parent_source_id"] == source_id
+    frame = media.frame(ws, child_id, 0.5)
+    assert frame["status"] == "extracted_not_inspected"
     monkeypatch.setattr(media, "transcribe", lambda *a: [{"id": "s0001", "start": 0, "end": 1, "text": "Synthetic spoken example"}])
     media.transcribe_local(ws, run, child_id)
     assert ws.read_segments(ws.source(source_id))[0]["text"] == "Exported post explanation"
     assert ws.read_segments(ws.source(child_id))[0]["text"] == "Synthetic spoken example"
-    assert media.frame(ws, child_id, 0.5)["status"] == "extracted_not_inspected"
+    assert (ws.root / frame["path"]).exists()
+    assert "video_path" not in ws.source(child_id) and "video_path" not in ws.source(source_id)
+    assert clip.exists() and (root / "export/001-video.mp4").exists()
     collector_media.import_redcrack_media(ws, run, root / "export")
     assert ws.source(child_id)["transcript_origin"] == "local_whisper"
     wiki = Wiki(ws)

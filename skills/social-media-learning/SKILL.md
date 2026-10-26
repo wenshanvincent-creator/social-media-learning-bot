@@ -7,6 +7,8 @@ description: Research topics from social videos, screen for evidence and freshne
 
 Use the user's current agent conversation for reasoning; call the `sociallearn` CLI for deterministic work. Do not start Claude/Claude Code or another model runner. Locate the installed CLI with `sociallearn --help`; in this repository use `.venv/Scripts/python.exe -m sociallearn` on Windows. All commands accept global `--root` before the subcommand.
 
+Downloaded working media is automatically removed after successful persisted conversion: ASR input after transcript/source save, and OCR video after all requested cue outputs are saved. Failed conversion or deferred OCR retains its input. `transcribe-local` also cleans up when returning a validated existing transcript. Extract any required new stills before local transcription; later new timestamps need reacquisition under the normal access rules. Saved frames/OCR, exact citations and evidence hashes remain usable. Cached OCR reuses its saved frames without downloading again. Only hash-matching `audio.*`/`video.*` working copies under `private/raw` are deleted; external originals/collector exports and unrelated historical downloads are not swept.
+
 ## Learn
 
 Default topic learning starts with one deterministic call: `sociallearn learn-topic 'TOPIC' --kind auto` (`collect-topic` is the same entry point).

@@ -74,6 +74,9 @@ def test_studio_video_to_frames_transcript_and_wiki_without_repeated_download(ar
             return [{"id": "s0001", "start": 0, "end": 1, "text": "Synthetic spoken instruction"}]
         monkeypatch.setattr(media, "transcribe", transcribe)
         assert media.transcribe_local(ws, run, source_id)["transcript_review_status"] == "needs_review"
+        assert not (ws.root / downloaded["video_path"]).exists()
+        assert "video_path" not in ws.source(source_id)
+        assert clip.exists()  # The original owned input is not the managed copy.
         assert media.transcribe_local(ws, run, source_id)["cached"] is True and len(calls) == 1
         assert wiki.read(["frame-rule"])["blocks"]  # New transcript does not invalidate unchanged visual evidence.
         wiki.put(block("text-rule", [{"source_id": source_id, "segment_ids": ["s0001"]}]))

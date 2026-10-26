@@ -174,7 +174,8 @@ def fetch(ws: Workspace, run_id: str, url: str, *, cookies: bool = False,
         if not refresh and old.get("status") == "transcribed" and (ws.root / old["segments_path"]).exists():
             if old.get("segments_sha256") and digest((ws.root / old["segments_path"]).read_bytes()) != old["segments_sha256"]:
                 raise ValueError("Cached transcript changed on disk; review or explicitly refresh")
-            return {**old, "cached": True}
+            cleanup_converted_media(ws, source_id, kinds=("audio",))
+            return {**ws.source(source_id), "cached": True}
         if refresh:
             ws.snapshot_source(source_id)
     folder = ws.root / "private/raw" / source_id
@@ -235,6 +236,7 @@ def fetch(ws: Workspace, run_id: str, url: str, *, cookies: bool = False,
                     with YoutubeDL(audio_opts) as audio_ydl:
                         audio_info = audio_ydl.extract_info(canonical, download=True)
                         audio_path = Path(audio_ydl.prepare_filename(audio_info))
+                    source.update(audio_path=str(audio_path.relative_to(ws.root)), audio_hash=digest(audio_path.read_bytes()))
                     segments = transcribe(audio_path, model=model)
                     source.update(transcript_origin="local_whisper", asr_model=model,
                                   asr_compute="cpu/int8", language="auto_detected",
@@ -243,7 +245,9 @@ def fetch(ws: Workspace, run_id: str, url: str, *, cookies: bool = False,
                 source.update(status="transcribed", segments_path=str((folder / "segments.json").relative_to(ws.root)),
                               segments_sha256=digest((folder / "segments.json").read_bytes()),
                               content_hash=digest(json.dumps(segments, ensure_ascii=False).encode()))
-                return ws.save_source(source)
+                ws.save_source(source)
+                cleanup_converted_media(ws, source_id, kinds=("audio",))
+                return ws.source(source_id)
     except (PermissionError, ValueError):
         raise
     except Exception as exc:
@@ -264,6 +268,38 @@ def transcribe(path: Path, model: str = "small") -> list[dict]:
     return result
 
 
+def cleanup_converted_media(ws: Workspace, source_id: str, kinds=("audio", "video")) -> dict:
+    """Remove bound working copies only after derived outputs are saved.
+
+    Keep evidence hashes/frames; an imported parent's video may be shared with
+    its child channel, so clear every matching path binding after deletion.
+    """
+    source = ws.source(source_id)
+    pending = []
+    managed = (ws.root / "private/raw").resolve()
+    for kind in kinds:
+        relative = source.get(kind + "_path")
+        if not relative:
+            continue
+        path = ws.root / relative
+        if (not managed.is_relative_to(ws.root) or path.is_symlink() or
+                not path.resolve().is_relative_to(managed) or not path.name.startswith(kind + ".")):
+            raise ValueError("Refusing to delete media outside its managed working-copy location")
+        if digest(path.read_bytes()) != source[kind + "_hash"]:
+            raise ValueError("Converted media changed; file retained")
+        pending.append((kind, relative, path, path.stat().st_size))
+    for kind, relative, path, size in pending:
+        path.unlink()
+        for row in ws.db.execute("SELECT data FROM sources").fetchall():
+            record = json.loads(row[0])
+            if record.get(kind + "_path") == relative:
+                record.pop(kind + "_path")
+                record.setdefault("media_cleanup", {})[kind] = {"status": "deleted_after_conversion",
+                    "deleted_at": now(), "bytes": size, "sha256": source[kind + "_hash"]}
+                ws.save_source(record)
+    return {"deleted": [kind for kind, *_ in pending], "bytes": sum(item[3] for item in pending)}
+
+
 def transcribe_local(ws: Workspace, run_id: str, source_id: str, model: str = "small") -> dict:
     """Read an already bound local video; no cookie/profile or network access."""
     if ws.run(run_id)["status"] != "active":
@@ -272,6 +308,7 @@ def transcribe_local(ws: Workspace, run_id: str, source_id: str, model: str = "s
     if source.get("segments_path"):
         ws.read_segments(source)
         if source.get("transcript_origin") in ("manual", "automatic", "platform_page_track", "local_whisper"):
+            cleanup_converted_media(ws, source_id)
             return {"id": source_id, "status": source["status"], "cached": True,
                     "transcript_origin": source["transcript_origin"]}
         raise ValueError("Keep exported post text intact; it is not a timed video transcript")
@@ -288,6 +325,7 @@ def transcribe_local(ws: Workspace, run_id: str, source_id: str, model: str = "s
                   segments_path=str(output.relative_to(ws.root)), segments_sha256=digest(output.read_bytes()),
                   content_hash=digest(json.dumps(segments, ensure_ascii=False).encode()))
     ws.save_source(source)
+    cleanup_converted_media(ws, source_id)
     return {"id": source_id, "status": "transcribed", "segments": len(segments),
             "transcript_origin": "local_whisper", "transcript_review_status": "needs_review"}
 

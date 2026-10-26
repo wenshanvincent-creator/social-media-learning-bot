@@ -49,12 +49,12 @@ def extract_screen_text(ws: Workspace, run_id: str, source_id: str, cues: list[d
         return {"status": "not_requested_no_cue", "items": [], "omitted_cues": 0}
     if not windows_ocr(language=language).get("available"):
         raise OcrUnavailable("Requested Windows OCR language is not installed")
-    media.download_video(ws, run_id, source["url"], cookies, max_minutes=30)
     items = []
     for cue in cues[:max_images]:
         source = ws.source(source_id)
         frame = source.get("frames", {}).get(f"{cue['at']:.3f}")
         if not frame or frame.get("video_hash") != source["video_hash"] or not (ws.root / frame["path"]).is_file() or digest((ws.root / frame["path"]).read_bytes()) != frame["sha256"]:
+            media.download_video(ws, run_id, source["url"], cookies, max_minutes=30)
             frame = media.frame(ws, source_id, cue["at"])
         output = ws.root / "private/raw" / source_id / f"ocr-{cue['at']:.3f}.json"
         existing = json.loads(output.read_text(encoding="utf-8")) if output.exists() else None
@@ -68,5 +68,7 @@ def extract_screen_text(ws: Workspace, run_id: str, source_id: str, cues: list[d
                     "citation": {"source_id": source_id, "frame_times": [cue["at"]]}}
             atomic_json(output, item)
         items.append(item)
+    if len(cues) <= max_images:
+        media.cleanup_converted_media(ws, source_id, kinds=("video",))
     return {"status": "extracted_needs_review", "items": items, "omitted_cues": max(0, len(cues)-max_images),
             "coverage": "transcript_cue_stills_only; unmentioned/silent screen text may be missed"}

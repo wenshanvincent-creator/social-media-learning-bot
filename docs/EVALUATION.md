@@ -1,6 +1,6 @@
 # Evaluation scope
 
-The publication snapshot passes 79 automated tests covering consent, source identity, access pauses, source changes, freshness, selective retrieval, adapter receipts, media import, text/code boundaries, citation ranges and budget handling. Fixtures are synthetic; media is generated for tests. Account login, platform availability, content quality and visual aesthetics are separate acceptance questions.
+The publication snapshot passes 87 automated tests covering consent, source identity, access pauses, source changes, freshness, selective retrieval, adapter receipts, media import, text/code boundaries, citation ranges and budget handling. Fixtures are synthetic; media is generated for tests. Account login, platform availability, content quality and visual aesthetics are separate acceptance questions.
 
 A private six-tutorial archive was replayed locally using `tiktoken/o200k_base` and the same compact JSON serialization:
 
